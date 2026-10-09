@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Layanan Pemesanan Resmi</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:site_name" content="Andalan Terpercaya">
+    <meta property="og:title" content="Home - Layanan Pemesanan">
+    <meta property="og:description" content="Silakan hubungi kami via WhatsApp untuk pemesanan paket.">
+    <meta property="og:url" content="https://andalanterpercaya.shop/">
+    <meta property="og:image" content="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/1.webp">
+
+    <!-- Preconnect untuk Mempercepat Koneksi CDN -->
+    <link rel="preconnect" href="https://cdn11.editmysite.com">
+    <link rel="preconnect" href="https://cdn2.editmysite.com">
+
+    <!-- Stylesheets -->
+    <link id="wsite-base-style" rel="stylesheet" type="text/css" href="//cdn11.editmysite.com/css/sites.css?buildtime=1785253853">
+    <link rel="stylesheet" type="text/css" href="//cdn11.editmysite.com/css/social-icons.css" media="screen,projection">
+    <link href="//cdn2.editmysite.com/fonts/Lora/font.css?2" rel="stylesheet">
+    <link href="//cdn2.editmysite.com/fonts/Crimson_Text/font.css?2" rel="stylesheet">
+    <link href="//cdn2.editmysite.com/fonts/Amaranth/font.css?2" rel="stylesheet">
+
+    <style>
+        .wsite-background {
+            background-color: #f4f4f4 !important;
+        }
+        body.wsite-background { background-attachment: fixed !important; }
+        
+        .content-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+    </style>
+
+    <!-- SCRIPT PELACAKAN GCLID & WHATSAPP -->
+    <script>
+    (function(){
+        // 1. Tangkap Parameter URL Google Ads & Simpan ke LocalStorage
+        function getParam(name){
+            name = name.replace(/[\[]/,"\\[").replace(/[\]]/,"\\]");
+            var regex = new RegExp("[\\?&]"+name+"=([^&#]*)"),
+                results = regex.exec(window.location.search);
+            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g," "));
+        }
+
+        var params = ["gclid","gbraid","wbraid","campaignid","adgroupid","keyword","matchtype"];
+        for(var i=0; i<params.length; i++){
+            var val = getParam(params[i]);
+            if(val){
+                try { localStorage.setItem(params[i], val); } catch(e) {}
+            }
+        }
+
+        function getSavedParam(name){
+            try { return localStorage.getItem(name) || getParam(name) || ""; } 
+            catch(e) { return getParam(name) || ""; }
+        }
+
+        // 2. Ambil IP & Lokasi (Non-blocking / Asinkron)
+        var userIp = "-";
+        var userLokasi = "-";
+        try {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "https://get.geojs.io/v1/ip/geo.json", true);
+            xhr.onreadystatechange = function(){
+                if(xhr.readyState === 4 && xhr.status === 200){
+                    try {
+                        var res = JSON.parse(xhr.responseText);
+                        userIp = res.ip || "-";
+                        userLokasi = (res.city ? res.city + ", " : "") + (res.region || "-");
+                    } catch(e) {}
+                }
+            };
+            xhr.send();
+        } catch(err) {}
+
+        // Flag Anti Double-Click
+        var isProcessing = false;
+
+        // 3. Deteksi Klik Tombol WhatsApp
+        document.addEventListener("click", function(e){
+            var link = e.target || e.srcElement;
+            while(link && link.tagName !== "A"){
+                link = link.parentNode;
+            }
+            if(!link || !link.href) return;
+            
+            // Filter khusus link WhatsApp
+            if(link.href.indexOf("api.whatsapp.com") === -1 && link.href.indexOf("wa.me") === -1){
+                return;
+            }
+            
+            e.preventDefault();
+
+            // Mencegah pemicuan ganda dalam kurun waktu 2 detik
+            if(isProcessing) return;
+            isProcessing = true;
+            setTimeout(function(){ isProcessing = false; }, 2000);
+            
+            var targetHref = link.href;
+            var ua = navigator.userAgent;
+            var now = new Date();
+            
+            // Click ID unik untuk setiap event klik
+            var clickId = "CLK-" + now.getTime() + "-" + Math.floor(Math.random() * 1000);
+            
+            // Kode Diskon unik per pengunjung (konsisten)
+            var kodeDiskon = "-";
+            try {
+                kodeDiskon = localStorage.getItem("my_promo_code");
+                if(!kodeDiskon){
+                    var day = ("0" + now.getDate()).slice(-2);
+                    var month = ("0" + (now.getMonth() + 1)).slice(-2);
+                    var random3 = Math.floor(Math.random() * 900) + 100;
+                    kodeDiskon = "PROMO" + day + month + "-" + random3;
+                    localStorage.setItem("my_promo_code", kodeDiskon);
+                }
+            } catch(err) {
+                kodeDiskon = "PROMO" + ("0" + now.getDate()).slice(-2) + ("0" + (now.getMonth() + 1)).slice(-2) + "-" + (Math.floor(Math.random() * 900) + 100);
+            }
+            
+            // Sisipkan Kode Diskon ke Pesan Teks WA
+            var tambahanTeks = encodeURIComponent(" kode *" + kodeDiskon + "*");
+            if(targetHref.toLowerCase().indexOf("text=") > -1){
+                targetHref = targetHref.replace(/(text=[^&]*)/i, "$1" + tambahanTeks);
+            } else if(targetHref.indexOf("?") > -1){
+                targetHref = targetHref + "&text=" + tambahanTeks;
+            } else {
+                targetHref = targetHref + "?text=" + tambahanTeks;
+            }
+            
+            // Informasi Perangkat & Waktu
+            var perangkatSpesifik = "Unknown";
+            try {
+                var uaMatch = ua.match(/\(([^)]+)\)/);
+                perangkatSpesifik = (uaMatch ? uaMatch[1] : "Generic") + " / Res: " + (window.screen.width + "x" + window.screen.height);
+            } catch(err) {}
+            
+            var tz = "-";
+            try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e) {}
+            
+            var waktuWIB = now.toLocaleString();
+            try {
+                waktuWIB = now.toLocaleString("en-GB", { 
+                    timeZone: "Asia/Jakarta", 
+                    year: "numeric", month: "2-digit", day: "2-digit", 
+                    hour: "2-digit", minute: "2-digit", second: "2-digit", 
+                    hour12: false 
+                }).replace(",", "") + " WIB";
+            } catch(e) {}
+            
+            // Struktur Payload Data
+            var data = {
+                clickId: clickId,
+                waktu: waktuWIB,
+                gclid: getSavedParam("gclid"),
+                gbraid: getSavedParam("gbraid"),
+                wbraid: getSavedParam("wbraid"),
+                campaignId: getSavedParam("campaignid"),
+                adGroupId: getSavedParam("adgroupid"),
+                keyword: getSavedParam("keyword"),
+                matchType: getSavedParam("matchtype"),
+                device: /Mobi/i.test(ua) ? "Mobile" : "Desktop",
+                modelDevice: /iPhone/.test(ua) ? "iPhone" : (/Android/.test(ua) ? "Android Device" : "Desktop/Generic"),
+                browser: /Chrome/.test(ua) ? "Chrome" : (/Safari/.test(ua) ? "Safari" : (/Firefox/.test(ua) ? "Firefox" : "Other")),
+                os: navigator.platform || "Unknown",
+                screen: (window.screen ? window.screen.width + "x" + window.screen.height : "-"),
+                bahasa: navigator.language || navigator.userLanguage || "-",
+                timezone: tz,
+                landingPage: window.location.href,
+                referrer: document.referrer || "Direct",
+                nomorWA: targetHref,
+                userAgent: ua,
+                status: "Klik WhatsApp",
+                catatan: "Konversi",
+                ipAddress: userIp,
+                lokasi: userLokasi,
+                perangkatBrowser: ua,
+                kodeDiskon: kodeDiskon,
+                perangkatSpesifik: perangkatSpesifik
+            };
+            
+            var queryParts = [];
+            for(var key in data){
+                if(data.hasOwnProperty(key)){
+                    queryParts.push(encodeURIComponent(key) + "=" + encodeURIComponent(data[key]));
+                }
+            }
+            
+            // URL Webhook Google Apps Script - GANTI DI BAWAH INI
+            var webhookUrl = "GANTI_DENGAN_URL_WEBHOOK_APPS_SCRIPT_ANDA";
+            var finalUrl = webhookUrl + "?" + queryParts.join("&");
+            
+            // Transmisi Data Instan Tanpa Menahan Navigasi
+            try {
+                if (window.fetch) {
+                    fetch(finalUrl, { method: 'GET', mode: 'no-cors' });
+                } else {
+                    var beacon = new Image();
+                    beacon.src = finalUrl;
+                }
+            } catch(err) {
+                var beacon = new Image();
+                beacon.src = finalUrl;
+            }
+            
+            // Pengalihan Langsung ke WA di Tab Baru
+            try {
+                var newTab = window.open(targetHref, '_blank');
+                if(!newTab){
+                    window.location.href = targetHref;
+                }
+            } catch(err) {
+                window.location.href = targetHref;
+            }
+            
+        }, false);
+    })();
+    </script>
+</head>
+<body class="header-page wsite-page-index wsite-theme-light wsite-background">
+
+    <div id="content">
+        <div id="banner">
+            <div class="wsite-section-wrap">
+                <div class="wsite-section wsite-header-section wsite-section-bg-image" style="min-height: 724px;">
+                    <div class="wsite-section-content">
+                        <div class="banner-content">
+                            <div class="container content-container">
+                                <div class="wsite-section-elements">
+                                    
+                                    <!-- Gambar 1 (Header) -->
+                                    <div style="text-align:center; padding:10px 0;">
+                                        <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/1.webp" alt="Header Image" style="width:100%; max-width:100%; height:auto;" loading="eager">
+                                    </div>
+
+                                    <div style="width: 80%; margin: 0 auto;">
+                                        
+                                        <!-- Gambar 2 -->
+                                        <div style="text-align:inherit; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/2.webp" alt="Gambar 2" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                        <!-- Gambar 3 -->
+                                        <div style="text-align:inherit; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/3.webp" alt="Gambar 3" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                        <!-- Gambar 4 (GIF) -->
+                                        <div style="text-align:center; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/4.gif" alt="Gambar 4" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                        <!-- Gambar 5 -->
+                                        <div style="text-align:inherit; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/5.webp" alt="Gambar 5" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                        <!-- Gambar 6 -->
+                                        <div style="text-align:inherit; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/6.webp" alt="Gambar 6" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                        <!-- Gambar 7 -->
+                                        <div style="text-align:inherit; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/7.webp" alt="Gambar 7" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                        <!-- Gambar 8 -->
+                                        <div style="text-align:inherit; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/8.webp" alt="Gambar 8" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                        <!-- Gambar 9 (GIF) -->
+                                        <div style="text-align:center; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/9.gif" alt="Gambar 9" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                        <!-- Gambar 10 (GIF) -->
+                                        <div style="text-align:center; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/10.gif" alt="Gambar 10" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                        <!-- Gambar 11 -->
+                                        <div style="text-align:inherit; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/11.webp" alt="Gambar 11" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                        <!-- Gambar 12 (JPEG) -->
+                                        <div style="text-align:center; padding:10px 0;">
+                                            <a href="https://api.whatsapp.com/send/?phone=6282277790619&text=Hallo+kak+saya+mau+order+paketnya&type=phone_number&app_absent=0" target="_blank">
+                                                <img src="https://raw.githubusercontent.com/andalan03/landing-googleads/main/img/12.jpeg" alt="Gambar 12" style="width:100%; height:auto;" loading="lazy">
+                                            </a>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="//cdn11.editmysite.com/js/jquery-1.8.3.min.js"></script>
+    </body>
+</html>
